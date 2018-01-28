@@ -4,7 +4,6 @@ var async = require('async');
 var moment = require('moment');
 var redis = require('redis');
 
-var user = require('../task/user');
 var config = require('../task/config');
 var domain = require('domain');
 var debug = require('debug')('socket-client:main');
@@ -87,103 +86,10 @@ function popLogs(){
             var nsp = place[0],room = place[1];
             result.room = room;
             console.log(' start '+' nsp: '+nsp +" room "+room + ' time: '+time);
-            async.waterfall([
-                function(done){
-                    //console.log('sroom');
-                    user.roomValidateSql(nsp,room,function(err,res){
-                        //console.log('room done');
-                        done(err,res);
-                    });
-                },
-                function(res,done){
-                    //console.log('suser');
-                    user.userValidateSql({token:result.token,uid:result.uid,openid:result.openid},function(err,res){
-                        //console.log('user done'/*,res*/);
-                        done(err,res);
-                    });
-                },
-                function(res,done){
-                    //console.log('ssql');
-                    user.messageDirty({msg:result.message},function(err,res){
-                        //console.log('sql done'/*,res*/);
-                        done(err,res);
-                    });
-                },
-                function(arg,done){
-                    //console.log(arg,'skey');
-                    user.messageValidate({result:result},function(err,res){
-                        //console.log('key done'/*,res*/);
-                        done(err,res);
-                    });
-                },
-            ],function(err,res){
-                console.log('-------------result.message:'+result.message+'-------------');
-                console.log('result.socketid:',result.socketid);
-                if(err){
-                    console.log('err!!!!',err);
-                    err.room = room;
-                    err.socketid = result.socketid;
-                    if(parseInt(err.status) == 702){//´æÔÚÃô¸Ð´Ê
-                        result.violate = 1;
-                        user.messageToKu(result,function(error,data){
-                            if(error){
-                                error.room = room;
-                                error.socketid = result.socketid;
-                                namBox[nsp].emit('messageError',error);
-                                return
-                            }
-                            if(namBox[nsp]){
-                                namBox[nsp].emit('messageError',err);
-                                console.log('-------------messageError, nexttick-------------');
-                            }else{
-                                console.log('-------------error namespace-------------');
-                            }
-                        });
-                    }else{
-                        if(namBox[nsp]){
-                            namBox[nsp].emit('messageError',err);
-                            console.log('-------------messageError, nexttick-------------');
-                        }else{
-                            console.log('-------------error namespace-------------');
-                        }
-                    }
-                }else{
-                    if(namBox[nsp]){
-                        client.lpush('messageKKDM'+nsp+room,JSON.stringify(result),redis.print);
-                        client.llen('messageKKDM'+nsp+room, function(error, count){
-                            if(error){
-                                console.log(error);
-                            }else{
-                                if(count >5){
-                                    client.rpop('messageKKDM'+nsp+room,function(err,result){
-                                        if(err){
-                                            console.log(err);
-                                        }
-                                    });
-                                }
-                            }
-                        });
-                        var messageSave = result.message;
-                        user.messageToKu(result, function (error,data) {
-                            if(error){
-                                error.room = room;
-                                error.socketid = result.socketid;
-                                namBox[nsp].emit('messageError',error);
-                                return
-                            }
-                            if(err){
-                                console.log(err);
-                            }else{
-                                result.message = messageSave;
-                                namBox[nsp].emit('redisCome',result);
-                                console.log('-------------redisEmit all done-------------',data);
-                            }
-                        });
-                    }else{
-                        console.log('error namespace');
-                    }
-                }
-            });
+            if(namBox[nsp]){
+                console.log(result);
+                namBox[nsp].emit('redisCome',result);
+            }
         }
     });
 }
