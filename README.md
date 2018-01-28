@@ -73,18 +73,25 @@ $ npm install pm2 -g
 ###### 基本描述
 
 #文件目录
+```
 middleware --接受发送消息模块
+
 task --逻辑处理模块
+```
 
 #主要功能
+```
 接受模块收到消息后 写redis队列 后端逻辑模块从redis队列里面取出 然后发送给发送模块
+```
 
 #运行步骤
- * npm install
- * 本地打开redis-server
- * 运行app.js文件
+```
+npm install
+本地打开redis-server
+运行app.js文件
     node app.js
- * 在task文件夹下运行sclient.js
+在task文件夹下运行sclient.js
     node sclient.js
- * 在浏览器里访问http://127.0.0.1:3000/
- * 选择命名空间房间看效果
+在浏览器里访问http://127.0.0.1:3000/
+选择命名空间房间看效果
+```
